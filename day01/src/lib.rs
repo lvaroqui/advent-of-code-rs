@@ -1,58 +1,77 @@
 use common::DayResult;
-use itertools::Itertools;
 
 pub struct Solver;
 
-const MAPPING: [([&str; 2], u32); 9] = [
-    (["1", "one"], 1),
-    (["2", "two"], 2),
-    (["3", "three"], 3),
-    (["4", "four"], 4),
-    (["5", "five"], 5),
-    (["6", "six"], 6),
-    (["7", "seven"], 7),
-    (["8", "eight"], 8),
-    (["9", "nine"], 9),
+const MAPPING: [(&str, u32); 9] = [
+    ("one", 1),
+    ("two", 2),
+    ("three", 3),
+    ("four", 4),
+    ("five", 5),
+    ("six", 6),
+    ("seven", 7),
+    ("eight", 8),
+    ("nine", 9),
 ];
 
 impl common::DualDaySolver for Solver {
     fn solve_1(&self, input: &str) -> DayResult {
-        let res: u32 = input
-            .split_whitespace()
-            .map(|line| {
-                let digits = line.chars().filter(|c| c.is_numeric()).collect_vec();
-                let first = digits.first().unwrap().to_digit(10).unwrap();
-                let last = digits.last().unwrap().to_digit(10).unwrap();
-                first * 10 + last
-            })
-            .sum();
-        DayResult::new(res)
+        solve(input, first_char_to_digit)
     }
 
     fn solve_2(&self, input: &str) -> DayResult {
-        let res: u32 = input
-            .split_whitespace()
-            .map(|line| {
-                let mut line = line;
-                let mut digits = vec![];
-
-                for _ in 0..line.len() {
-                    for (pats, val) in &MAPPING {
-                        for pat in pats {
-                            if line.starts_with(pat) {
-                                digits.push(*val);
-                                break;
-                            }
-                        }
+        solve(input, |s| {
+            if let Some(digit) = first_char_to_digit(s) {
+                return Some(digit);
+            } else {
+                for (pat, val) in &MAPPING {
+                    if s.starts_with(pat) {
+                        return Some(*val);
                     }
-
-                    line = &line[1..];
                 }
-                let first = digits.first().unwrap();
-                let last = digits.last().unwrap();
-                first * 10 + last
-            })
-            .sum();
-        DayResult::new(res)
+            }
+            None
+        })
     }
+}
+
+fn first_char_to_digit(s: &str) -> Option<u32> {
+    let next = s.chars().next()?;
+    if next.is_numeric() {
+        Some(next.to_digit(10).expect("to be convertible"))
+    } else {
+        None
+    }
+}
+
+fn solve(input: &str, filter: impl Fn(&str) -> Option<u32>) -> DayResult {
+    let res: u32 = input
+        .split_whitespace()
+        .map(|line| {
+            let mut first = None;
+            let mut last = None;
+
+            // Find first
+            for i in 0..line.len() {
+                let l = &line[i..];
+                if let Some(f) = filter(l) {
+                    first = Some(f);
+                    break;
+                }
+            }
+
+            // Find last
+            for i in (0..line.len()).rev() {
+                let l = &line[i..];
+                if let Some(f) = filter(l) {
+                    last = Some(f);
+                    break;
+                }
+            }
+
+            first.unwrap() * 10 + last.unwrap()
+        })
+        .sum();
+
+    DayResult::new(res)
 }
