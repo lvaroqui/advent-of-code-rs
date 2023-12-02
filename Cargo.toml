@@ -1,0 +1,8 @@
+[workspace]
+members = ["common", "cli", "day*"]
+
+[workspace.dependencies]
+itertools = "0.10"
+
+[profile.release]
+debug = true
