@@ -107,7 +107,7 @@ fn solve_day(
         let client = Client::new();
         let session_key = std::fs::read_to_string("session-key")?;
         let mut req = client
-            .get(format!("https://adventofcode.com/2022/day/{}/input", day))
+            .get(format!("https://adventofcode.com/2023/day/{}/input", day))
             .header("Cookie", format!("session={}", session_key))
             .send()?;
         let mut buf = [0; 4096];
