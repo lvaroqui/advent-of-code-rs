@@ -3,18 +3,23 @@ use common::DayResult;
 pub struct Solver;
 
 #[derive(Debug, Default)]
-struct Set {
-    red: u32,
-    green: u32,
-    blue: u32,
-}
+struct Set([u32; 3]);
+
 impl Set {
     fn possible_with(&self, bag: &Set) -> bool {
-        self.red <= bag.red && self.green <= bag.green && self.blue <= bag.blue
+        self.0.iter().zip(bag.0.iter()).all(|(l, r)| l <= r)
     }
 
     fn power(&self) -> u32 {
-        self.red * self.green * self.blue
+        self.0.iter().product()
+    }
+
+    fn max(mut self, other: &Set) -> Self {
+        self.0
+            .iter_mut()
+            .zip(other.0.iter())
+            .for_each(|(l, r)| *l = (*l).max(*r));
+        self
     }
 }
 
@@ -29,11 +34,7 @@ impl common::DualDaySolver for Solver {
         let lines = input.split('\n');
         let parser = parser();
 
-        let bag = Set {
-            red: 12,
-            green: 13,
-            blue: 14,
-        };
+        let bag = Set([12, 13, 14]);
 
         let res = lines
             .map(|line| parser.parse(line).unwrap())
@@ -57,11 +58,7 @@ impl common::DualDaySolver for Solver {
             .map(|game| {
                 game.sets
                     .into_iter()
-                    .reduce(|acc, val| Set {
-                        red: acc.red.max(val.red),
-                        green: acc.green.max(val.green),
-                        blue: acc.blue.max(val.blue),
-                    })
+                    .reduce(|acc, val| acc.max(&val))
                     .unwrap()
                     .power()
             })
@@ -72,30 +69,20 @@ impl common::DualDaySolver for Solver {
 }
 
 fn parser() -> impl Parser<char, Game, Error = Simple<char>> {
-    enum Color {
-        Red,
-        Green,
-        Blue,
-    }
-
     let set = text::int(10)
         .padded()
         .then(
             just("red")
-                .map(|_| Color::Red)
-                .or(just("green").map(|_| Color::Green))
-                .or(just("blue").map(|_| Color::Blue)),
+                .map(|_| 0)
+                .or(just("green").map(|_| 1))
+                .or(just("blue").map(|_| 2)),
         )
         .separated_by(just(','))
         .map(|colors| {
             let mut set = Set::default();
             for (value, color) in colors {
                 let value = value.parse::<u32>().unwrap();
-                match color {
-                    Color::Red => set.red += value,
-                    Color::Green => set.green += value,
-                    Color::Blue => set.blue += value,
-                }
+                set.0[color] += value
             }
 
             set
