@@ -69,7 +69,9 @@ impl common::DualDaySolver for Solver {
 }
 
 fn parser() -> impl Parser<char, Game, Error = Simple<char>> {
-    let set = text::int(10)
+    let number = text::int(10).map(|i: String| i.parse::<u32>().unwrap());
+
+    let set = number
         .padded()
         .then(
             just("red")
@@ -81,7 +83,6 @@ fn parser() -> impl Parser<char, Game, Error = Simple<char>> {
         .map(|colors| {
             let mut set = Set::default();
             for (value, color) in colors {
-                let value = value.parse::<u32>().unwrap();
                 set.0[color] += value
             }
 
@@ -89,11 +90,8 @@ fn parser() -> impl Parser<char, Game, Error = Simple<char>> {
         });
 
     just("Game ")
-        .ignore_then(text::int(10))
+        .ignore_then(number)
         .then_ignore(just(':'))
         .then(set.separated_by(just(';')))
-        .map(|(id, sets)| Game {
-            id: id.parse().unwrap(),
-            sets,
-        })
+        .map(|(id, sets)| Game { id, sets })
 }

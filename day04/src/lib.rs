@@ -42,24 +42,20 @@ impl common::DualDaySolver for Solver {
 }
 
 fn parser() -> impl Parser<char, Vec<Card>, Error = Simple<char>> {
-    let numbers = text::int(10).padded().repeated();
+    let number = text::int(10).map(|i: String| i.parse::<u32>().unwrap());
+
+    let numbers = number.padded().repeated();
 
     let card = just("Card")
         .padded()
-        .ignore_then(text::int(10))
+        .ignore_then(number)
         .then_ignore(just(':'))
         .then(numbers)
         .then_ignore(just('|'))
         .then(numbers)
         .map(|((_id, winning_numbers), numbers)| {
-            let winning_numbers = winning_numbers
-                .into_iter()
-                .map(|n| n.parse().unwrap())
-                .collect::<HashSet<u32>>();
-            let numbers = numbers
-                .into_iter()
-                .map(|n| n.parse().unwrap())
-                .collect::<HashSet<u32>>();
+            let winning_numbers = winning_numbers.into_iter().collect::<HashSet<u32>>();
+            let numbers = numbers.into_iter().collect::<HashSet<u32>>();
             Card {
                 matches: winning_numbers.intersection(&numbers).count(),
             }
